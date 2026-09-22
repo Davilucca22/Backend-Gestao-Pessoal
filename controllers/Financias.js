@@ -1,5 +1,6 @@
 import pool from "../database.js"
 
+//adiciona um novo registro no banco
 export const FinanciasPOST = async (req,res) => {
     try{
         const {form} = req.body
@@ -32,6 +33,7 @@ export const FinanciasPOST = async (req,res) => {
 
 }
 
+//busca todos os registro financeiros de um usuario
 export const FinanciasGET = async (req,res) =>{
     const {id} = req.query
 
@@ -62,6 +64,7 @@ export const FinanciasGET = async (req,res) =>{
 
 }
 
+//deleta um registro financeiro do usuario
 export const FinaciasDELETE = async (req,res) =>{
     const {id} = req.query
 
