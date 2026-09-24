@@ -2,6 +2,8 @@ import pool from "../database.js"
 
 //adiciona um novo registro no banco
 export const FinanciasPOST = async (req,res) => {
+    const client = await pool.connect()
+ 
     try{
         const {form} = req.body
     
@@ -14,7 +16,6 @@ export const FinanciasPOST = async (req,res) => {
     
         if(vazio) return res.status(404).json({response:"Formulario incompleto!"})
     
-        const client = await pool.connect()
     
         const resp = await client.query(
             `INSERT INTO FINANCIAS(ID_USER,TIPO,DESCRICAO,CATEGORIA,VALOR,DATA)
@@ -22,13 +23,13 @@ export const FinanciasPOST = async (req,res) => {
             [form.id,form.tipo,form.descricao,form.categoria,form.valor,form.data]
         )
  
-        client.release()
-    
         res.status(201).json({response:"Registro Salvo!",obj: resp.rows[0]})
-
+        
     }catch(err){
         res.status(500).json({response:"Erro no servidor"})
         console.log(err)
+    }finally{
+        client.release()
     }
 
 }
@@ -39,8 +40,9 @@ export const FinanciasGET = async (req,res) =>{
 
     if(!id) return res.status(404).json({response:"Id não enviado!"})
 
+    const client = await pool.connect()
+    
     try{
-        const client = await pool.connect()
 
         const user = await client.query(`
                 SELECT USERS.NAME,FINANCIAS.* FROM
@@ -52,15 +54,19 @@ export const FinanciasGET = async (req,res) =>{
         const resp = user.rows
 
         if(resp.length === 0) return res.status(404).json({response:"Dados não encontrados"})
+    
+            res.status(200).json({response:resp})
+            
+        }catch(err){
+        
+            res.status(500).json({response:"Erro no Servidor"})
+            console.log(err)
+        
+        }finally{
+            
+            client.release()
 
-        client.release()
-
-        res.status(200).json({response:resp})
-
-    }catch(err){
-        res.status(500).json({response:"Erro no Servidor"})
-        console.log(err)
-    }
+        }   
 
 }
 
@@ -70,9 +76,9 @@ export const FinaciasDELETE = async (req,res) =>{
 
     if(!id) return res.status(404).json({response:"Id não enviado!"})
 
-    try{
+    const client = await pool.connect()
 
-        const client = await pool.connect()
+    try{
 
         const resp = await client.query(`
                 DELETE FROM FINANCIAS
@@ -84,5 +90,7 @@ export const FinaciasDELETE = async (req,res) =>{
     }catch(err){
         res.status(500).json({response:"Erro no Servidor"})
         console.log(err)
+    }finally{
+        client.release()
     }
 }
