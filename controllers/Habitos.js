@@ -126,3 +126,55 @@ export const HabitosDELETE = async (req,res) => {
         client.release()
     }
 }
+
+
+export const RegistraHabito = async (req,res) => {
+    const {idHabito,idUser,data} = req.query
+
+    if(!idHabito || !idUser || !data) return res.status(404).json({response:"Dados Incompletos"})
+
+    const client = await pool.connect()
+
+    try{
+
+        const  resp = await client.query(`
+            INSERT INTO dias_habitos(ID_HABITO,ID_USER,DATA)
+            VALUES($1,$2,$3)
+            RETURNING *
+            `,[idHabito,idUser,data])
+
+        res.status(200).json({response:"Gravado!"})
+
+    }catch(err){
+        res.status(500).json({response:"Erro no servidor"})
+        console.log(err)
+    }finally{
+        client.release()
+    }
+
+}
+
+export const DeletaRegistro = async (req,res) => {
+    const {id} = req.query
+
+    if(!id) return res.status(404).json({response:"Dados Incompletos"})
+
+    const client = await pool.connect()
+
+    try{
+
+        const  resp = await client.query(`
+            DELETE FROM dias_habitos
+            WHERE ID = $1 
+            `,[id])
+
+        res.status(200).json({response:"Deletado!"})
+
+    }catch(err){
+        res.status(500).json({response:"Erro no servidor"})
+        console.log(err)
+    }finally{
+        client.release()
+    }
+
+}
