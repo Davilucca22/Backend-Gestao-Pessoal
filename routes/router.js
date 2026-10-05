@@ -6,7 +6,7 @@ import { HabitosGET, HabitosPUT, HabitosDELETE, HabitosPOST, RegistraHabito, Del
 import { AgendaDELETE, AgendaGET, AgendaPOST, AgendaPUT } from '../controllers/Agenda.js'
 import { CalendarioGET,CalendarioPOST,CalendarioPUT,CalendarioDELETE } from '../controllers/Calendario.js'
 import { TreinoGET, TreinoPOST, TreinoPUT, TreinoDELETE } from '../controllers/Treino.js'
-
+import { ExercicioPOST,ExercicioPUT,ExercicioDELETE } from '../controllers/Exercicios.js'
 
 router.get('/',(req,res) => {
     res.send('Ola, Filho da Puta')
@@ -38,5 +38,9 @@ router.get("/treino",TreinoGET),
 router.post("/treino",TreinoPOST),
 router.put("/treino",TreinoPUT),
 router.delete("/treino",TreinoDELETE)
+
+router.post("/treino/exercicios",ExercicioPOST),
+router.put("/treino/exercicios",ExercicioPUT),
+router.delete("/treino/exercicios",ExercicioDELETE)
 
 export default router
