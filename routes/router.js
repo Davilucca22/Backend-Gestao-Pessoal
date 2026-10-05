@@ -1,6 +1,8 @@
 import  { Router } from 'express'
 const router = Router()
 
+import { Registro } from '../controllers/Registro.js'
+import { Login } from '../controllers/Login.js'
 import { FinanciasPOST,FinanciasGET, FinaciasDELETE } from '../controllers/Financias.js'
 import { HabitosGET, HabitosPUT, HabitosDELETE, HabitosPOST, RegistraHabito, DeletaRegistro } from '../controllers/Habitos.js'
 import { AgendaDELETE, AgendaGET, AgendaPOST, AgendaPUT } from '../controllers/Agenda.js'
@@ -11,6 +13,9 @@ import { ExercicioPOST,ExercicioPUT,ExercicioDELETE } from '../controllers/Exerc
 router.get('/',(req,res) => {
     res.send('Ola, Filho da Puta')
 })
+
+router.post("/registro",Registro)
+router.post("/login",Login)
 
 router.post("/financias",FinanciasPOST)
 router.get("/financias",FinanciasGET)

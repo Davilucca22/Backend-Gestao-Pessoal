@@ -106,3 +106,4 @@ export const ExercicioDELETE = async (req,res) => {
   }
     
 }
+
