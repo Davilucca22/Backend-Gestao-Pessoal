@@ -12,7 +12,31 @@ const pool = new Pool({
 
 export async function testConnect(){
     const client = await pool.connect()
-    client.release()
+    try {
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS USER_APP_DATA (
+                USER_ID TEXT PRIMARY KEY,
+                DATA JSONB NOT NULL DEFAULT '{}'::jsonb,
+                UPDATED_AT TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                RELATIONAL_SYNCED_AT TIMESTAMPTZ
+            )
+        `)
+        await client.query(`
+            ALTER TABLE USER_APP_DATA
+            ADD COLUMN IF NOT EXISTS RELATIONAL_SYNCED_AT TIMESTAMPTZ
+        `)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS USER_APP_RECORDS (
+                USER_ID TEXT NOT NULL,
+                COLLECTION TEXT NOT NULL,
+                CLIENT_ID TEXT NOT NULL,
+                RECORD_ID INTEGER NOT NULL,
+                PRIMARY KEY (USER_ID, COLLECTION, CLIENT_ID)
+            )
+        `)
+    } finally {
+        client.release()
+    }
     console.log("Banco conectado")
 }
 

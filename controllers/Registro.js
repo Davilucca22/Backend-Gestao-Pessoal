@@ -9,7 +9,7 @@ export const Registro = async (req,res) => {
         typeof form.name !== "string" || !form.name.trim() ||
         typeof form.email !== "string" ||
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) ||
-        typeof form.senha !== "string" || !form.senha) {
+        typeof form.senha !== "string" || form.senha.length < 8) {
         return res.status(400).json({response:"Formulario incompleto ou inválido!"})
     }
 

@@ -7,7 +7,12 @@ const app = Express()
 
 import {testConnect} from "./database.js"
 
-const allowedOrigins = (process.env.URLFRONT || "")
+const allowedOrigins = (
+  process.env.URLFRONT ||
+  (process.env.NODE_ENV !== "production"
+    ? "http://localhost:5173,http://127.0.0.1:5173"
+    : "")
+)
   .split(",")
   .map(origin => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);

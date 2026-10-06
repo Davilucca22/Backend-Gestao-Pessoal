@@ -9,6 +9,7 @@ import { AgendaDELETE, AgendaGET, AgendaPOST, AgendaPUT } from '../controllers/A
 import { CalendarioGET,CalendarioPOST,CalendarioPUT,CalendarioDELETE } from '../controllers/Calendario.js'
 import { TreinoGET, TreinoPOST, TreinoPUT, TreinoDELETE } from '../controllers/Treino.js'
 import { ExercicioPOST,ExercicioPUT,ExercicioDELETE } from '../controllers/Exercicios.js'
+import { CurrentUser, GetUserData, ImportUserData, ReplaceUserData } from '../controllers/UserData.js'
 
 import { verifyToken } from '../midlewares/authMiddleware.js'
 import { authLimiter } from '../midlewares/rate_limit.js'
@@ -20,6 +21,20 @@ router.get('/',(req,res) => {
 
 router.post("/registro",authLimiter,Registro)
 router.post("/login",authLimiter,Login)
+router.get("/me",verifyToken,CurrentUser)
+router.get("/me/data",verifyToken,GetUserData)
+router.put("/me/data",verifyToken,ReplaceUserData)
+router.post("/me/data/import",verifyToken,ImportUserData)
+router.post("/logout",verifyToken,(req,res) => {
+    const isProduction = process.env.NODE_ENV === "production"
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/"
+    })
+    res.status(200).json({response: "Sessão encerrada"})
+})
 
 router.post("/financias",verifyToken,FinanciasPOST)
 router.get("/financias",verifyToken,FinanciasGET)
