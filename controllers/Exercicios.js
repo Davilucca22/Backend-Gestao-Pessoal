@@ -1,14 +1,12 @@
 import pool from "../database.js"
 
 export const ExercicioPOST = async (req,res) => {
-  const {form} = req.body
+  const form = req.body?.form
 
-  //verifica campos vazios no formulario
-  const vazio = Object.values(form).some(
-      val => val === null || val === undefined || (typeof val === "string" && val.trim() === "")
-  )
-
-  if(vazio) return res.status(400).json({response:"formulario incompleto!"})
+  if (!form || typeof form !== "object" || Array.isArray(form) ||
+      [form.treino_id,form.nome,form.series,form.repeticoes].some(value => value === undefined || value === null || value === "")) {
+    return res.status(400).json({response:"formulario incompleto!"})
+  }
 
   const client = await pool.connect()
 
@@ -16,10 +14,12 @@ export const ExercicioPOST = async (req,res) => {
 
     const resp = await client.query(`
       INSERT INTO EXERCICIOS(TREINO_ID,NOME,SERIES,REPETICOES)
-      VALUES($1,$2,$3,$4)
+      SELECT ID,$2,$3,$4 FROM TREINOS
+      WHERE ID = $1 AND USER_ID = $5
       RETURNING *
-      `,[form.treino_id,form.nome,form.series,form.repeticoes])
+      `,[form.treino_id,form.nome,form.series,form.repeticoes,req.user.id])
       
+      if (resp.rows.length === 0) return res.status(404).json({response:"Treino não encontrado!"})
       res.status(200).json({response:resp.rows})
       
     }catch(err){
@@ -37,14 +37,12 @@ export const ExercicioPOST = async (req,res) => {
 
 export const ExercicioPUT = async (req,res) => {
 
-  const {form} = req.body
+  const form = req.body?.form
 
-  //verifica campos vazios no formulario
-  const vazio = Object.values(form).some(
-      val => val === null || val === undefined || (typeof val === "string" && val.trim() === "")
-  )
-
-  if(vazio) return res.status(400).json({response:"formulario incompleto!"})
+  if (!form || typeof form !== "object" || Array.isArray(form) ||
+      [form.treino_id,form.nome,form.series,form.repeticoes,form.exercicio_id].some(value => value === undefined || value === null || value === "")) {
+    return res.status(400).json({response:"formulario incompleto!"})
+  }
 
   const client = await pool.connect()  
 
@@ -58,9 +56,12 @@ export const ExercicioPUT = async (req,res) => {
         SERIES = $3,
         REPETICOES = $4
       WHERE ID = $5
+        AND TREINO_ID IN (SELECT ID FROM TREINOS WHERE USER_ID = $6)
+        AND $1 IN (SELECT ID FROM TREINOS WHERE USER_ID = $6)
       RETURNING *
-    `,[form.treino_id,form.nome,form.series,form.repeticoes,form.exercicio_id])
+    `,[form.treino_id,form.nome,form.series,form.repeticoes,form.exercicio_id,req.user.id])
 
+    if (resp.rows.length === 0) return res.status(404).json({response:"Exercício não encontrado!"})
     res.status(200).json({response:resp.rows})
 
   }catch(err){
@@ -89,9 +90,11 @@ export const ExercicioDELETE = async (req,res) => {
     const resp = await client.query(`
       DELETE FROM EXERCICIOS
       WHERE ID = $1 AND TREINO_ID = $2
+        AND TREINO_ID IN (SELECT ID FROM TREINOS WHERE USER_ID = $3)
       RETURNING *
-    `,[id_exercicio,id_treino])
+    `,[id_exercicio,id_treino,req.user.id])
 
+    if (resp.rows.length === 0) return res.status(404).json({response:"Exercício não encontrado!"})
     res.status(200).json({response:"Exercicio Deletado!"})
 
   }catch(err){
@@ -106,4 +109,3 @@ export const ExercicioDELETE = async (req,res) => {
   }
     
 }
-

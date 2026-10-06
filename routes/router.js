@@ -10,42 +10,46 @@ import { CalendarioGET,CalendarioPOST,CalendarioPUT,CalendarioDELETE } from '../
 import { TreinoGET, TreinoPOST, TreinoPUT, TreinoDELETE } from '../controllers/Treino.js'
 import { ExercicioPOST,ExercicioPUT,ExercicioDELETE } from '../controllers/Exercicios.js'
 
+import { verifyToken } from '../midlewares/authMiddleware.js'
+import { authLimiter } from '../midlewares/rate_limit.js'
+
+
 router.get('/',(req,res) => {
     res.send('Ola, Filho da Puta')
 })
 
-router.post("/registro",Registro)
-router.post("/login",Login)
+router.post("/registro",authLimiter,Registro)
+router.post("/login",authLimiter,Login)
 
-router.post("/financias",FinanciasPOST)
-router.get("/financias",FinanciasGET)
-router.delete("/financias",FinaciasDELETE)
+router.post("/financias",verifyToken,FinanciasPOST)
+router.get("/financias",verifyToken,FinanciasGET)
+router.delete("/financias",verifyToken,FinaciasDELETE)
 
-router.get("/habitos",HabitosGET)
-router.post("/habitos", HabitosPOST)
-router.put("/habitos",HabitosPUT)
-router.delete("/habitos",HabitosDELETE)
+router.get("/habitos",verifyToken,HabitosGET)
+router.post("/habitos",verifyToken, HabitosPOST)
+router.put("/habitos",verifyToken,HabitosPUT)
+router.delete("/habitos",verifyToken,HabitosDELETE)
 
-router.post("/habitos/registrar",RegistraHabito)
-router.delete("/habitos/registrar",DeletaRegistro)
+router.post("/habitos/registrar",verifyToken,RegistraHabito)
+router.delete("/habitos/registrar",verifyToken,DeletaRegistro)
 
-router.get("/agenda",AgendaGET)
-router.post("/agenda",AgendaPOST)
-router.put("/agenda",AgendaPUT)
-router.delete("/agenda",AgendaDELETE)
+router.get("/agenda",verifyToken,AgendaGET)
+router.post("/agenda",verifyToken,AgendaPOST)
+router.put("/agenda",verifyToken,AgendaPUT)
+router.delete("/agenda",verifyToken,AgendaDELETE)
 
-router.get("/calendario",CalendarioGET)
-router.post("/calendario",CalendarioPOST)
-router.put("/calendario",CalendarioPUT)
-router.delete("/calendario",CalendarioDELETE)
+router.get("/calendario",verifyToken,CalendarioGET)
+router.post("/calendario",verifyToken,CalendarioPOST)
+router.put("/calendario",verifyToken,CalendarioPUT)
+router.delete("/calendario",verifyToken,CalendarioDELETE)
 
-router.get("/treino",TreinoGET),
-router.post("/treino",TreinoPOST),
-router.put("/treino",TreinoPUT),
-router.delete("/treino",TreinoDELETE)
+router.get("/treino",verifyToken,TreinoGET),
+router.post("/treino",verifyToken,TreinoPOST),
+router.put("/treino",verifyToken,TreinoPUT),
+router.delete("/treino",verifyToken,TreinoDELETE)
 
-router.post("/treino/exercicios",ExercicioPOST),
-router.put("/treino/exercicios",ExercicioPUT),
-router.delete("/treino/exercicios",ExercicioDELETE)
+router.post("/treino/exercicios",verifyToken,ExercicioPOST),
+router.put("/treino/exercicios",verifyToken,ExercicioPUT),
+router.delete("/treino/exercicios",verifyToken,ExercicioDELETE)
 
 export default router

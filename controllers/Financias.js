@@ -2,44 +2,37 @@ import pool from "../database.js"
 
 //adiciona um novo registro no banco
 export const FinanciasPOST = async (req,res) => {
-    const client = await pool.connect()
- 
+    const form = req.body?.form
+    if (!form || typeof form !== "object" || Array.isArray(form)) {
+        return res.status(400).json({response:"Formulario não enviado"})
+    }
+    const {tipo,descricao,categoria,valor,data} = form
+    if ([tipo,descricao,categoria,valor,data].some(value => value === undefined || value === null || value === "")) {
+        return res.status(400).json({response:"Formulario incompleto!"})
+    }
+
+    let client
     try{
-        const {form} = req.body
-    
-        if(!form) return res.status(404).json({response:"Formulario não enviado"})
-    
-        //verifica campos vazios no formulario
-        const vazio = Object.values(form).some(
-            val => val === null || val === undefined || (typeof val === "string" && val.trim() === "")
-        )
-    
-        if(vazio) return res.status(404).json({response:"Formulario incompleto!"})
-    
-    
+        client = await pool.connect()
         const resp = await client.query(
             `INSERT INTO FINANCIAS(ID_USER,TIPO,DESCRICAO,CATEGORIA,VALOR,DATA)
             VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [form.id,form.tipo,form.descricao,form.categoria,form.valor,form.data]
+            [req.user.id,tipo,descricao,categoria,valor,data]
         )
  
         res.status(201).json({response:"Registro Salvo!",obj: resp.rows[0]})
         
     }catch(err){
         res.status(500).json({response:"Erro no servidor"})
-        console.log(err)
+        console.error("Falha ao criar lançamento financeiro:", err)
     }finally{
-        client.release()
+        client?.release()
     }
 
 }
 
 //busca todos os registro financeiros de um usuario
 export const FinanciasGET = async (req,res) =>{
-    const {id} = req.query
-
-    if(!id) return res.status(404).json({response:"Id não enviado!"})
-
     const client = await pool.connect()
     
     try{
@@ -49,7 +42,7 @@ export const FinanciasGET = async (req,res) =>{
                 USERS INNER JOIN FINANCIAS
                 ON USERS.ID = FINANCIAS.ID_USER
                 WHERE USERS.ID = $1
-            `,[id])
+            `,[req.user.id])
         
         const resp = user.rows
 
@@ -82,9 +75,11 @@ export const FinaciasDELETE = async (req,res) =>{
 
         const resp = await client.query(`
                 DELETE FROM FINANCIAS
-                WHERE ID = $1
-        `,[id])
+                WHERE ID = $1 AND ID_USER = $2
+                RETURNING ID
+        `,[id,req.user.id])
 
+        if (resp.rows.length === 0) return res.status(404).json({response:"Registro não encontrado"})
         res.status(200).json({response:"Registro Apagado"})
 
     }catch(err){

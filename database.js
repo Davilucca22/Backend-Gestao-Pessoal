@@ -1,30 +1,19 @@
 import pkg from 'pg';
-import { configDotenv } from 'dotenv';
-
-configDotenv()
+import 'dotenv/config'
 
 const {Pool} = pkg;
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_CONNECT,
-    ssl:{
-        rejectUnauthorized:false
-    }
+    ssl: process.env.DATABASE_SSL === "false"
+        ? false
+        : { rejectUnauthorized: true }
 })
 
-//valida a conexao com o banco de dados
 export async function testConnect(){
-    try{
-        const client = await pool.connect()
-
-        console.log("Banco conectado")
-
-        client.release()
-        
-    }catch(err){
-        console.log("Erro ao conectar com o Banco")
-        console.log(err.message)
-    }
+    const client = await pool.connect()
+    client.release()
+    console.log("Banco conectado")
 }
 
 export default pool

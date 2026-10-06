@@ -1,12 +1,7 @@
-import { response } from "express"
 import pool from "../database.js"
 
 //busca os habitos de um usuario
 export const HabitosGET = async (req,res) => {
-    const {id} = req.query
-
-    if(!id) return res.status(400).json({response:"Id não enviado"})
-
     const client = await pool.connect()
 
     try{
@@ -16,7 +11,7 @@ export const HabitosGET = async (req,res) => {
             FROM USERS INNER JOIN HABITOS
             ON USERS.ID = HABITOS.ID_USER
             WHERE USERS.ID = $1
-            `,[id]
+            `,[req.user.id]
         )
     
         const items = resp.rows
@@ -36,9 +31,9 @@ export const HabitosGET = async (req,res) => {
 
 export const HabitosPOST = async (req,res) => {
 
-    const {habito, id} = req.query
+    const {habito} = req.query
 
-    if(!habito || !id) return res.status(400).json({response:"dados Incompletos!"})
+    if(typeof habito !== "string" || !habito.trim()) return res.status(400).json({response:"dados Incompletos!"})
 
     const client = await pool.connect()
 
@@ -47,7 +42,7 @@ export const HabitosPOST = async (req,res) => {
         const resp = await client.query(`
             INSERT INTO HABITOS(ID_USER,HABITO)
             VALUES($1,$2) RETURNING *
-            `,[id,habito])
+            `,[req.user.id,habito.trim()])
 
         const items = resp.rows
 
@@ -68,24 +63,20 @@ export const HabitosPOST = async (req,res) => {
 
 export const HabitosPUT = async (req,res) => {
 
-    const {idHabito,idUser,habito} = req.query
+    const {idHabito,habito} = req.query
     
-    if(!idHabito || !idUser || !habito) return res.status(400).json({response:"Dados Incompletos!"})
+    if(!idHabito || typeof habito !== "string" || !habito.trim()) return res.status(400).json({response:"Dados Incompletos!"})
         
         const client = await pool.connect()
         
         try{
 
-        console.log(idHabito, idUser, habito)
-            
         const resp = await client.query(`
             UPDATE HABITOS
             SET habito = $1
             WHERE ID = $2 AND ID_USER = $3
             RETURNING *
-            `,[habito,idHabito,idUser])
-
-        console.log(resp)
+            `,[habito.trim(),idHabito,req.user.id])
     
         if(resp.rows.length === 0) return res.status(404).json({response:"habito nao encontrado!"})
             
@@ -103,9 +94,9 @@ export const HabitosPUT = async (req,res) => {
 
 export const HabitosDELETE = async (req,res) => {
 
-    const {idHabito,idUser} = req.query
+    const {idHabito} = req.query
 
-    if(!idHabito || !idUser) return res.status(404).json({response:"Dados Incompletos!"})
+    if(!idHabito) return res.status(400).json({response:"Dados Incompletos!"})
 
     const client = await pool.connect()
 
@@ -114,7 +105,7 @@ export const HabitosDELETE = async (req,res) => {
             DELETE FROM HABITOS
             WHERE ID = $1 AND ID_USER = $2
             RETURNING *
-            `,[idHabito,idUser])
+            `,[idHabito,req.user.id])
 
         if(resp.rows.length === 0) return res.status(404).json({response:"habito nao encontrado!"})
 
@@ -129,9 +120,9 @@ export const HabitosDELETE = async (req,res) => {
 
 
 export const RegistraHabito = async (req,res) => {
-    const {idHabito,idUser,data} = req.query
+    const {idHabito,data} = req.query
 
-    if(!idHabito || !idUser || !data) return res.status(404).json({response:"Dados Incompletos"})
+    if(!idHabito || !data) return res.status(400).json({response:"Dados Incompletos"})
 
     const client = await pool.connect()
 
@@ -139,9 +130,13 @@ export const RegistraHabito = async (req,res) => {
 
         const  resp = await client.query(`
             INSERT INTO dias_habitos(ID_HABITO,ID_USER,DATA)
-            VALUES($1,$2,$3)
+            SELECT HABITOS.ID, HABITOS.ID_USER, $2
+            FROM HABITOS
+            WHERE HABITOS.ID = $1 AND HABITOS.ID_USER = $3
             RETURNING *
-            `,[idHabito,idUser,data])
+            `,[idHabito,data,req.user.id])
+
+        if (resp.rows.length === 0) return res.status(404).json({response:"Hábito não encontrado"})
 
         res.status(200).json({response:"Gravado!"})
 
@@ -165,9 +160,11 @@ export const DeletaRegistro = async (req,res) => {
 
         const  resp = await client.query(`
             DELETE FROM dias_habitos
-            WHERE ID = $1 
-            `,[id])
+            WHERE ID = $1 AND ID_USER = $2
+            RETURNING ID
+            `,[id,req.user.id])
 
+        if (resp.rows.length === 0) return res.status(404).json({response:"Registro não encontrado"})
         res.status(200).json({response:"Deletado!"})
 
     }catch(err){

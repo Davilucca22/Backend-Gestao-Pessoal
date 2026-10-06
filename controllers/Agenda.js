@@ -1,10 +1,6 @@
 import pool from "../database.js"
 
 export const AgendaGET = async (req,res) => {
-    const {IDuser} = req.query
-
-    if(!IDuser) return res.status(404).json({response:"Dados Incompletos"})
-
     const client = await pool.connect()
 
     try{
@@ -14,7 +10,7 @@ export const AgendaGET = async (req,res) => {
             USERS INNER JOIN AGENDA ON
             USERS.ID = AGENDA.ID_USER
             WHERE USERS.ID = $1
-            `,[IDuser])
+            `,[req.user.id])
 
         if(resp.rows.length === 0) return res.status(404).json({response:"Registros não encontrados!"})
 
@@ -31,14 +27,12 @@ export const AgendaGET = async (req,res) => {
 }
 
 export const AgendaPOST = async (req,res) => {
-    const {form} = req.body
+    const form = req.body?.form
 
-    //verifica campos vazios no formulario
-    const vazio = Object.values(form).some(
-        val => val === null || val === undefined || (typeof val === "string" && val.trim() === "")
-    )
-
-    if(vazio) return res.status(404).json({response:"Formulario incompleto"})
+    if (!form || typeof form !== "object" || Array.isArray(form) ||
+        [form.titulo,form.anotacao,form.data].some(value => value === undefined || value === null || value === "")) {
+        return res.status(400).json({response:"Formulario incompleto"})
+    }
 
     const client = await pool.connect()
 
@@ -48,7 +42,7 @@ export const AgendaPOST = async (req,res) => {
             INSERT INTO AGENDA(ID_USER,TITULO,ANOTACAO,DATA)
             VALUES($1,$2,$3,$4)
             RETURNING *
-            `,[form.id,form.titulo,form.anotacao,form.data])
+            `,[req.user.id,form.titulo,form.anotacao,form.data])
 
         if(resp.rows.length === 0) return res.status(404).json({response:"Usuario não encontrado!"})
 
@@ -66,14 +60,12 @@ export const AgendaPOST = async (req,res) => {
 }
 
 export const AgendaPUT = async (req,res) => {
-    const {form} = req.body
+    const form = req.body?.form
 
-    //verifica campos vazios no formulario
-    const vazio = Object.values(form).some(
-        val => val === null || val === undefined || (typeof val === "string" && val.trim() === "")
-    )
-
-    if(vazio) return res.status(400).json({response:"Formulario Incompleto!"})
+    if (!form || typeof form !== "object" || Array.isArray(form) ||
+        [form.titulo,form.anotacao,form.data,form.id].some(value => value === undefined || value === null || value === "")) {
+        return res.status(400).json({response:"Formulario Incompleto!"})
+    }
 
     const client = await pool.connect()
 
@@ -85,9 +77,9 @@ export const AgendaPUT = async (req,res) => {
                 TITULO = $1,
                 ANOTACAO = $2,
                 DATA = $3
-            WHERE ID = $4
+            WHERE ID = $4 AND ID_USER = $5
             RETURNING *
-            `,[form.titulo,form.anotacao,form.data,form.id])
+            `,[form.titulo,form.anotacao,form.data,form.id,req.user.id])
 
         if(resp.rows.length === 0) return res.status(404).json({response:"Anotação não encontrada"})
 
@@ -116,9 +108,9 @@ export const AgendaDELETE = async (req,res) => {
 
         const resp = await client.query(`
             DELETE FROM AGENDA
-            WHERE ID = $1
+            WHERE ID = $1 AND ID_USER = $2
             RETURNING *
-            `,[id])
+            `,[id,req.user.id])
 
         if(resp.rows.length === 0) return res.status(404).json({response:"anotação nao encontrada!"})
 
